@@ -6,6 +6,7 @@
     <string name="nav_home">首页</string>
     <string name="nav_settings">设置</string>
     <string name="nav_status">状态面板</string>
+    <string name="nav_test">测试</string>
     <string name="status_overlay">蒙版状态</string>
     <string name="status_camera">摄像头状态</string>
     <string name="status_battery">电池模式</string>

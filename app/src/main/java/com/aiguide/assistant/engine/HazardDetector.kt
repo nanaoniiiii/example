@@ -108,7 +108,11 @@ class HazardDetector @Inject constructor(
         Array(1) { FloatArray(1) }                              // [1, 1]
 
     init {
-        initializeModel()
+        try {
+            initializeModel()
+        } catch (e: Exception) {
+            isInitialized = false
+        }
         startObserving()
     }
 

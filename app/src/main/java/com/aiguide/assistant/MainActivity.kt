@@ -11,6 +11,7 @@ import com.aiguide.assistant.service.ServiceBus
 import com.aiguide.assistant.ui.OnboardingActivity
 import com.aiguide.assistant.ui.SettingsActivity
 import com.aiguide.assistant.ui.StatusIndicator
+import com.aiguide.assistant.ui.TestPanelActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -22,6 +23,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    /*
     @Inject
     lateinit var serviceBus: ServiceBus
 
@@ -30,11 +32,13 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var deviceProfileEngine: DeviceProfileEngine
+    */
 
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.d("MainActivity", "onCreate: start")
 
         // 检查首次启动
         if (OnboardingActivity.isFirstLaunch(this)) {
@@ -46,8 +50,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        android.util.Log.d("MainActivity", "onCreate: success - minimal version")
+
         setupBottomNav()
-        observeStateFlows()
     }
 
     private fun setupBottomNav() {
@@ -58,12 +63,8 @@ class MainActivity : AppCompatActivity() {
                     startActivity(Intent(this, SettingsActivity::class.java))
                     true
                 }
-                R.id.navStatus -> {
-                    if (statusIndicator.isVisible) {
-                        statusIndicator.hide()
-                    } else {
-                        statusIndicator.show()
-                    }
+                R.id.navTest -> {
+                    startActivity(Intent(this, TestPanelActivity::class.java))
                     true
                 }
                 else -> false
@@ -135,4 +136,5 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    */
 }

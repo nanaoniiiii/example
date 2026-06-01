@@ -71,17 +71,21 @@ class VisionEngine @Inject constructor(
 
     init {
         // 注册摄像头可用性回调，实现自动重连
-        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
-        cameraManager?.registerAvailabilityCallback(
-            object : CameraManager.AvailabilityCallback() {
-                override fun onCameraAvailable(cameraId: String) {
-                    if (!_isRunning.value && serviceBus.cameraEnabled.value) {
-                        scope.launch { startCamera() }
+        try {
+            val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
+            cameraManager?.registerAvailabilityCallback(
+                object : CameraManager.AvailabilityCallback() {
+                    override fun onCameraAvailable(cameraId: String) {
+                        if (!_isRunning.value && serviceBus.cameraEnabled.value) {
+                            scope.launch { startCamera() }
+                        }
                     }
-                }
-            },
-            null
-        )
+                },
+                null
+            )
+        } catch (_: Exception) {
+            // 摄像头服务不可用（如模拟器环境），静默跳过
+        }
 
         // Phase 4: 监听 deviceProfile 变化，动态调整帧率
         scope.launch {

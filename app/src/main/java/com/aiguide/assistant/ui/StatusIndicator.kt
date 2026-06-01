@@ -36,8 +36,8 @@ class StatusIndicator @Inject constructor(
     private val serviceBus: ServiceBus
 ) {
 
-    private val windowManager: WindowManager =
-        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val windowManager: WindowManager? =
+        context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
 
     private var indicatorView: View? = null
     private var textOverlay: TextView? = null
@@ -67,6 +67,7 @@ class StatusIndicator @Inject constructor(
     fun show(): Boolean {
         if (!canDrawOverlays()) return false
         if (indicatorView != null) return true
+        val wm = windowManager ?: return false
 
         val view = LayoutInflater.from(context).inflate(R.layout.item_status_indicator, null) as LinearLayout
         textOverlay = view.findViewById(R.id.tvOverlay)
@@ -88,7 +89,7 @@ class StatusIndicator @Inject constructor(
         }
 
         try {
-            windowManager.addView(view, params)
+            wm.addView(view, params)
             indicatorView = view
             serviceBus.statusIndicatorVisible.value = true
             startObserving()
@@ -101,7 +102,7 @@ class StatusIndicator @Inject constructor(
     fun hide() {
         val view = indicatorView ?: return
         try {
-            windowManager.removeView(view)
+            windowManager?.removeView(view)
         } catch (_: Exception) { }
         indicatorView = null
         serviceBus.statusIndicatorVisible.value = false

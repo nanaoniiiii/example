@@ -53,8 +53,8 @@ class FlashlightManager @Inject constructor(
     private val mainHandler = Handler(Looper.getMainLooper())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private val cameraManager: CameraManager =
-        context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    private val cameraManager: CameraManager? =
+        context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
 
     /** 后置摄像头 ID（带闪光灯） */
     private var rearCameraId: String? = null
@@ -69,7 +69,11 @@ class FlashlightManager @Inject constructor(
     private var flashRunnable: Runnable? = null
 
     init {
-        detectCameraWithFlash()
+        try {
+            detectCameraWithFlash()
+        } catch (_: Exception) {
+            // 摄像头检测失败，静默跳过
+        }
         observeEnvironmentLight()
         observePerformanceParams()
     }
@@ -110,9 +114,13 @@ class FlashlightManager @Inject constructor(
      * 检测后置摄像头是否支持手电筒 + 环境光 Sensor。
      */
     private fun detectCameraWithFlash() {
+        val cm = cameraManager ?: run {
+            lightSensorAvailable = false
+            return
+        }
         try {
-            for (cameraId in cameraManager.cameraIdList) {
-                val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            for (cameraId in cm.cameraIdList) {
+                val characteristics = cm.getCameraCharacteristics(cameraId)
                 val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
 
                 if (facing == CameraCharacteristics.LENS_FACING_BACK) {
@@ -245,7 +253,7 @@ class FlashlightManager @Inject constructor(
     private fun turnOnTorch() {
         try {
             rearCameraId?.let { cameraId ->
-                cameraManager.setTorchMode(cameraId, true)
+                cameraManager?.setTorchMode(cameraId, true)
             }
         } catch (_: Exception) {
             // 手电筒不可用（被占用等）
@@ -258,7 +266,7 @@ class FlashlightManager @Inject constructor(
     private fun turnOffTorch() {
         try {
             rearCameraId?.let { cameraId ->
-                cameraManager.setTorchMode(cameraId, false)
+                cameraManager?.setTorchMode(cameraId, false)
             }
         } catch (_: Exception) {
             // 忽略

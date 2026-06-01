@@ -29,8 +29,8 @@ class PrivacyOverlayManager @Inject constructor(
     private val serviceBus: ServiceBus
 ) {
 
-    private val windowManager: WindowManager =
-        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val windowManager: WindowManager? =
+        context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
 
     private var overlayView: View? = null
     private var isVisible = false
@@ -63,6 +63,7 @@ class PrivacyOverlayManager @Inject constructor(
     fun show(initialAlpha: Int = 100): Boolean {
         if (!canDrawOverlays()) return false
         if (isVisible) return true
+        val wm = windowManager ?: return false
 
         val view = View(context).apply {
             setBackgroundColor(android.graphics.Color.BLACK)
@@ -85,7 +86,7 @@ class PrivacyOverlayManager @Inject constructor(
         }
 
         try {
-            windowManager.addView(view, params)
+            wm.addView(view, params)
             overlayView = view
             isVisible = true
             startObservingAlpha()
@@ -101,7 +102,7 @@ class PrivacyOverlayManager @Inject constructor(
     fun hide() {
         val view = overlayView ?: return
         try {
-            windowManager.removeView(view)
+            windowManager?.removeView(view)
         } catch (_: Exception) {
             // View 已被移除或未添加
         }

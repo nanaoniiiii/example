@@ -9,7 +9,7 @@
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="@string/nav_settings" />
     <item
-        android:id="@+id/navStatus"
-        android:icon="@android:drawable/ic_menu_view"
-        android:title="@string/nav_status" />
+        android:id="@+id/navTest"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/nav_test" />
 </menu>
