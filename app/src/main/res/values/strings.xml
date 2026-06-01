@@ -1,4 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AIGuide</string>
+
+    <!-- 主界面 -->
+    <string name="nav_home">首页</string>
+    <string name="nav_settings">设置</string>
+    <string name="nav_status">状态面板</string>
+    <string name="status_overlay">蒙版状态</string>
+    <string name="status_camera">摄像头状态</string>
+    <string name="status_battery">电池模式</string>
+    <string name="status_device_tier">设备档位</string>
+    <string name="status_on">开</string>
+    <string name="status_off">关</string>
+    <string name="status_charging">充电</string>
+    <string name="status_battery_low">低电量</string>
+    <string name="status_battery_normal">电池</string>
+    <string name="status_unknown">未知</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="setting_privacy_overlay_alpha">蒙版透明度</string>
+    <string name="setting_voice_wake">语音唤醒</string>
+    <string name="setting_tts_rate">TTS 语速</string>
+    <string name="setting_tts_pitch">TTS 音调</string>
+    <string name="setting_assist_timeout">协助模式超时时间</string>
+    <string name="setting_flashlight">闪光灯</string>
+    <string name="setting_low_power">低功耗模式</string>
+    <string name="setting_assist_timeout_format">%d 分钟</string>
+
+    <!-- 引导页 -->
+    <string name="onboarding_skip">跳过</string>
+    <string name="onboarding_next">下一步</string>
+    <string name="onboarding_start">开始使用</string>
+    <string name="onboarding_page1_title">AIGuide 智能辅助</string>
+    <string name="onboarding_page1_desc">通过语音交互、隐私蒙版和导航辅助，为您打造安全便捷的出行体验。</string>
+    <string name="onboarding_page2_title">授予必要权限</string>
+    <string name="onboarding_page2_desc">为确保功能正常运行，请授予以下权限：\n\n- 无障碍服务（三击电源键触发协助）\n- 悬浮窗权限（隐私蒙版显示）\n- 摄像头权限（环境感知）\n- 通知权限（关键事件提醒）</string>
+    <string name="onboarding_page3_title">语音唤醒</string>
+    <string name="onboarding_page3_desc">对着手机说出唤醒词「小助」，即可唤醒 AIGuide 智能助手。\n\n在协助模式中，唤醒词可随时触发紧急退出机制。</string>
+    <string name="onboarding_page4_title">一切就绪</string>
+    <string name="onboarding_page4_desc">您已完成基础设置，AIGuide 将为您提供：\n\n- 隐私蒙版保护\n- 智能导航辅助\n- 天黑闪光灯提醒\n- 实时语音播报\n\n现在开始使用吧！</string>
+
+    <!-- 通用 -->
+    <string name="pref_first_launch">pref_first_launch</string>
 </resources>

@@ -100,6 +100,28 @@ class ServiceBus @Inject constructor() {
     var performanceParams = MutableStateFlow(PerformanceParams())
 
     // ========================
+    // UI 绑定状态 (StateFlow)
+    // ========================
+
+    /** 语音唤醒开关 */
+    var voiceWakeEnabled = MutableStateFlow(true)
+
+    /** TTS 语速 (0.5 ~ 2.0) */
+    var ttsRate = MutableStateFlow(1.0f)
+
+    /** TTS 音调 (0.5 ~ 2.0) */
+    var ttsPitch = MutableStateFlow(1.0f)
+
+    /** 协助模式超时时间（分钟，1 ~ 5） */
+    var assistModeTimeout = MutableStateFlow(3)
+
+    /** 低功耗模式开关 */
+    var lowPowerMode = MutableStateFlow(false)
+
+    /** 状态指示器悬浮窗可见性 */
+    var statusIndicatorVisible = MutableStateFlow(false)
+
+    // ========================
     // 事件发射方法
     // ========================
 
