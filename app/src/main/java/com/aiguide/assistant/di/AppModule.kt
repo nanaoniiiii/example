@@ -94,4 +94,18 @@ object AppModule {
         @ApplicationContext context: Context,
         serviceBus: ServiceBus
     ): FlashlightManager = FlashlightManager(context, serviceBus)
+
+    @Provides
+    @Singleton
+    fun provideAutoEngine(
+        serviceBus: ServiceBus,
+        ttsManager: TtsManager,
+        visionEngine: VisionEngine
+    ): AutoEngine = AutoEngine(serviceBus, ttsManager, visionEngine)
+
+    @Provides
+    @Singleton
+    fun provideSafetyGuard(
+        serviceBus: ServiceBus
+    ): SafetyGuard = SafetyGuard(serviceBus)
 }

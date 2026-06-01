@@ -154,7 +154,7 @@ class HazardDetector @Inject constructor(
     /**
      * 每 INFERENCE_INTERVAL 帧推理一次，其他帧直接关闭并跳过。
      */
-    private fun processFrame(frame: ImageProxy) {
+    private suspend fun processFrame(frame: ImageProxy) {
         try {
             frameCounter++
             if (frameCounter % INFERENCE_INTERVAL != 0) {

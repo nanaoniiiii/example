@@ -54,6 +54,10 @@ class ServiceBus @Inject constructor() {
     /** 危险分析结果 */
     val hazardAlert = MutableSharedFlow<HazardResult>(extraBufferCapacity = 8)
 
+    /** 自动操作执行结果 */
+    private val _autoActionResult = MutableSharedFlow<AutoActionResult>(extraBufferCapacity = 8)
+    val autoActionResult = _autoActionResult.asSharedFlow()
+
     // ========================
     // 状态通道 (StateFlow)
     // ========================
@@ -76,6 +80,9 @@ class ServiceBus @Inject constructor() {
 
     /** 摄像头开关状态 */
     var cameraEnabled = MutableStateFlow(false)
+
+    /** 自动操作引擎开关状态 */
+    var autoEngineEnabled = MutableStateFlow(true)
 
     /** 环境光 lux（实时读取） */
     var environmentLux = MutableStateFlow(0f)
@@ -112,6 +119,10 @@ class ServiceBus @Inject constructor() {
 
     fun onNavWarning(warning: NavWarning) {
         _navDeviationWarning.tryEmit(warning)
+    }
+
+    fun emitAutoActionResult(result: AutoActionResult) {
+        _autoActionResult.tryEmit(result)
     }
 
     fun setAssistMode(mode: AssistMode) {
@@ -176,3 +187,24 @@ data class HazardResult(
     val distance: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
+
+/** 自动操作执行结果 */
+data class AutoActionResult(
+    val actionType: String,
+    val actionDetail: String,
+    val success: Boolean,
+    val message: String = "",
+    val requireConfirmation: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+/** 自动操作类型 */
+enum class AutoActionType {
+    CLICK,
+    SWIPE,
+    INPUT_TEXT,
+    BACK,
+    HOME,
+    RECENT,
+    NOTIFICATIONS
+}

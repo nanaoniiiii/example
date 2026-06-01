@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
@@ -121,16 +123,13 @@ class FlashlightManager @Inject constructor(
                     val flashAvailable =
                         characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) ?: false
 
-                    // 检测环境光 Sensor
-                    val lightSensorKeys = characteristics.get(
-                        CameraCharacteristics.SENSOR_INFO_LIGHT_AVAILABLE
-                    )
+                    // 通过 SensorManager 检测环境光 Sensor 是否可用
+                    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+                    lightSensorAvailable = sensorManager?.getDefaultSensor(Sensor.TYPE_LIGHT) != null
 
                     if (flashAvailable) {
                         rearCameraId = cameraId
                     }
-
-                    lightSensorAvailable = lightSensorKeys ?: false
                     break
                 }
             }

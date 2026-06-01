@@ -1,10 +1,12 @@
 package com.aiguide.assistant
 
 import android.app.Application
+import com.aiguide.assistant.engine.AutoEngine
 import com.aiguide.assistant.engine.FlashlightManager
 import com.aiguide.assistant.engine.HazardDetector
 import com.aiguide.assistant.engine.NavSafetyEngine
 import com.aiguide.assistant.engine.NavigationListener
+import com.aiguide.assistant.engine.SafetyGuard
 import com.aiguide.assistant.engine.VisionEngine
 import com.aiguide.assistant.service.ServiceBus
 import dagger.hilt.android.HiltAndroidApp
@@ -31,6 +33,12 @@ class AIGuideApp : Application() {
     @Inject
     lateinit var flashlightManager: FlashlightManager
 
+    @Inject
+    lateinit var autoEngine: AutoEngine
+
+    @Inject
+    lateinit var safetyGuard: SafetyGuard
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -41,6 +49,9 @@ class AIGuideApp : Application() {
         // Phase 2: 初始化 HazardDetector 和 FlashlightManager
         // HazardDetector 在 init 块中自动开始监听 cameraFrame 流
         // FlashlightManager 在 init 块中自动开始监听环境光和电源状态
+
+        // Phase 3: AutoEngine 在 init 块中自动监听 voiceCommand 流；
+        // SafetyGuard 在 init 块中自动监听 hazardAlert / assistMode / cameraEnabled
     }
 
     companion object {
