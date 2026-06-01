@@ -2,6 +2,8 @@ package com.aiguide.assistant.di
 
 import android.content.Context
 import com.aiguide.assistant.engine.AssistModeManager
+import com.aiguide.assistant.engine.FlashlightManager
+import com.aiguide.assistant.engine.HazardDetector
 import com.aiguide.assistant.engine.NavSafetyEngine
 import com.aiguide.assistant.engine.NavigationListener
 import com.aiguide.assistant.engine.TtsManager
@@ -78,4 +80,18 @@ object AppModule {
     fun provideNavSafetyEngine(
         serviceBus: ServiceBus
     ): NavSafetyEngine = NavSafetyEngine(serviceBus)
+
+    @Provides
+    @Singleton
+    fun provideHazardDetector(
+        @ApplicationContext context: Context,
+        serviceBus: ServiceBus
+    ): HazardDetector = HazardDetector(context, serviceBus)
+
+    @Provides
+    @Singleton
+    fun provideFlashlightManager(
+        @ApplicationContext context: Context,
+        serviceBus: ServiceBus
+    ): FlashlightManager = FlashlightManager(context, serviceBus)
 }

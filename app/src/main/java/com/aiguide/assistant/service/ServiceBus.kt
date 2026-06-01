@@ -1,5 +1,6 @@
 package com.aiguide.assistant.service
 
+import com.aiguide.assistant.engine.NavInstruction
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,8 +48,8 @@ class ServiceBus @Inject constructor() {
     /** Camera2 帧流 (YUV ImageProxy) */
     val cameraFrame = MutableSharedFlow<ImageProxy>(extraBufferCapacity = 16)
 
-    /** 导航播报事件 (TTS 文本) */
-    val navigationEvent = MutableSharedFlow<String>(extraBufferCapacity = 8)
+    /** 导航播报事件 — Phase 2 升级为结构化 NavInstruction */
+    val navigationEvent = MutableSharedFlow<NavInstruction>(extraBufferCapacity = 8)
 
     /** 危险分析结果 */
     val hazardAlert = MutableSharedFlow<HazardResult>(extraBufferCapacity = 8)
@@ -76,8 +77,14 @@ class ServiceBus @Inject constructor() {
     /** 摄像头开关状态 */
     var cameraEnabled = MutableStateFlow(false)
 
-    /** 环境光 lux（预留） */
+    /** 环境光 lux（实时读取） */
     var environmentLux = MutableStateFlow(0f)
+
+    /** 手电筒闪光灯是否正在工作 */
+    var flashLightEnabled = MutableStateFlow(false)
+
+    /** 当前环境是否判定为天黑（lux < 10） */
+    var isDarkEnvironment = MutableStateFlow(false)
 
     // ========================
     // 事件发射方法
@@ -157,9 +164,15 @@ enum class NavWarningType { OFF_ROUTE, OBSTACLE, WRONG_DIRECTION }
 /** 三级危险等级 */
 enum class HazardLevel { CRITICAL, WARNING, INFO }
 
-/** 危险分析结果 */
+/** 危险分析结果（Phase 2 增强：支持检测类型 + 边界框 + 距离估算） */
 data class HazardResult(
     val level: HazardLevel,
     val message: String,
+    /** 检测目标类型：人/车/自行车/障碍物/马路边缘/急坡 */
+    val type: String = "",
+    /** 目标边界框（图像坐标，归一化或像素坐标） */
+    val bbox: BoundingBox? = null,
+    /** 粗略距离估算：近/中/远 */
+    val distance: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )

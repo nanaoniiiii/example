@@ -13,7 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 导航安全校验层：接收导航播报事件和摄像头帧，
+ * 导航安全校验层：接收结构化导航指令 [NavInstruction] 和摄像头帧，
  * 分析危险等级并发布到 [ServiceBus.hazardAlert]。
  *
  * ## 危险等级
@@ -23,7 +23,7 @@ import javax.inject.Singleton
  *
  * ## 当前状态
  * Phase 1 骨架实现，[analyzeHazard] 返回占位结果。
- * Phase 2 将集成 ML Kit / 自定义模型进行实际危险检测。
+ * Phase 2 集成 HazardDetector 进行实际危险检测，本层负责交叉验证。
  */
 @Singleton
 class NavSafetyEngine @Inject constructor(
@@ -38,12 +38,12 @@ class NavSafetyEngine @Inject constructor(
     }
 
     /**
-     * 监听导航播报事件流。
+     * 监听结构化导航指令流。
      */
     private fun observeNavigationEvents() {
         scope.launch {
-            serviceBus.navigationEvent.collectLatest { navText ->
-                val result = analyzeHazard(navText, null)
+            serviceBus.navigationEvent.collectLatest { instruction ->
+                val result = analyzeHazard(instruction = instruction, frame = null)
                 if (result.level != HazardLevel.INFO) {
                     serviceBus.hazardAlert.tryEmit(result)
                 }
@@ -59,12 +59,11 @@ class NavSafetyEngine @Inject constructor(
         scope.launch(Dispatchers.Default) {
             serviceBus.cameraFrame.collectLatest { frame ->
                 try {
-                    val result = analyzeHazard(navText = "", frame = frame)
+                    val result = analyzeHazard(instruction = null, frame = frame)
                     if (result.level != HazardLevel.INFO) {
                         serviceBus.hazardAlert.tryEmit(result)
                     }
                 } finally {
-                    // NavSafetyEngine 是 cameraFrame 的消费者，负责关闭帧
                     frame.close()
                 }
             }
@@ -77,19 +76,15 @@ class NavSafetyEngine @Inject constructor(
      * Phase 1 骨架：返回 INFO 级别占位结果。
      * Phase 2 将实现：物体检测 / 场景理解 / 偏离判断 / 结合导航指令校验。
      *
-     * @param navText 导航播报文本，空字符串表示仅帧分析
-     * @param frame   Camera2 帧数据，null 表示仅文本分析
+     * @param instruction 导航指令，null 表示仅帧分析
+     * @param frame       Camera2 帧数据，null 表示仅指令分析
      * @return 危险分析结果
      */
-    fun analyzeHazard(navText: String, frame: ImageProxy?): HazardResult {
-        // Phase 2 实现：
-        //   1. 从 navText 提取导航指令（转向、距离、车道）
-        //   2. 从 frame 提取场景特征（物体检测、车道线、深度估计）
-        //   3. 交叉验证：实际场景 vs 导航指令
-        //   4. 输出危险等级 + 描述信息
+    fun analyzeHazard(instruction: NavInstruction?, frame: ImageProxy?): HazardResult {
         val message = when {
-            navText.isNotEmpty() -> "导航播报: $navText"
-            else -> "帧分析完成"
+            instruction != null -> "导航指令: ${instruction.raw} (${instruction::class.simpleName}, ${instruction.distance}m)"
+            frame != null       -> "帧分析完成"
+            else                -> "空分析"
         }
 
         return HazardResult(
