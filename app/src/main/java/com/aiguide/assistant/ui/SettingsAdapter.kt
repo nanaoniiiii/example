@@ -13,7 +13,7 @@ import kotlin.math.roundToInt
 /**
  * 设置项数据类。
  */
-sealed class SettingItem(val key: String, val viewType: Int) {
+sealed class SettingItem(open val key: String, val viewType: Int) {
 
     companion object {
         const val TYPE_SWITCH = 0
@@ -23,42 +23,42 @@ sealed class SettingItem(val key: String, val viewType: Int) {
     }
 
     data class Switch(
+        override val key: String,
         val title: String,
         val summary: String,
         val valueFromFlow: () -> Boolean,
-        val onValueChanged: (Boolean) -> Unit,
-        private val _key: String = ""
-    ) : SettingItem(_key, TYPE_SWITCH)
+        val onValueChanged: (Boolean) -> Unit
+    ) : SettingItem(key, TYPE_SWITCH)
 
     data class Slider(
+        override val key: String,
         val title: String,
         val summary: String,
         val valueFromFlow: () -> Int,
         val valueRange: IntRange,
-        val onValueChanged: (Int) -> Unit,
-        private val _key: String = ""
-    ) : SettingItem(_key, TYPE_SLIDER)
+        val onValueChanged: (Int) -> Unit
+    ) : SettingItem(key, TYPE_SLIDER)
 
     data class SliderInt(
+        override val key: String,
         val title: String,
         val summary: String,
         val valueFromFlow: () -> Int,
         val valueRange: IntRange,
         val displayFormat: (Int) -> String = { it.toString() },
-        val onValueChanged: (Int) -> Unit,
-        private val _key: String = ""
-    ) : SettingItem(_key, TYPE_SLIDER_INT)
+        val onValueChanged: (Int) -> Unit
+    ) : SettingItem(key, TYPE_SLIDER_INT)
 
     data class SliderFloat(
+        override val key: String,
         val title: String,
         val summary: String,
         val valueFromFlow: () -> Float,
         val floatRange: ClosedFloatingPointRange<Float>,
         val floatSteps: Int = 30,
         val displayFormat: (Float) -> String = { "%.1f".format(it) },
-        val onValueChanged: (Float) -> Unit,
-        private val _key: String = ""
-    ) : SettingItem(_key, TYPE_SLIDER_FLOAT)
+        val onValueChanged: (Float) -> Unit
+    ) : SettingItem(key, TYPE_SLIDER_FLOAT)
 }
 
 /**

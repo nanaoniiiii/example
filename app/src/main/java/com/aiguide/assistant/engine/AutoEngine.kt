@@ -28,8 +28,8 @@ import kotlin.coroutines.resume
 
 /** 半自动手机操作的原子 UI 操作，由 AutoEngine 解析语音指令后生成。 */
 sealed class UiAction {
-    /** 点击屏幕坐标 (x, y) */
-    data class Click(val x: Int, val y: Int) : UiAction()
+    /** 点击屏幕坐标 (x, y)，targetText 为延迟解析的目标文本 */
+    data class Click(val x: Int, val y: Int, val targetText: String? = null) : UiAction()
 
     /** 滑动手势：从 (x1, y1) 到 (x2, y2)，duration 毫秒 */
     data class Swipe(
@@ -309,7 +309,7 @@ class AutoEngine @Inject constructor(
     private suspend fun executeAction(action: UiAction) {
         // 若是延迟解析的点击目标，现在解析坐标
         val resolvedAction = if (action is UiAction.Click && action.x == -1 && action.y == -1) {
-            val target = (action as? ClickTargetHolder)?.targetText
+            val target = action.targetText
             if (target != null) {
                 val coords = resolveTargetCoordinates(target)
                 if (coords != null) UiAction.Click(coords.first, coords.second)
@@ -376,12 +376,12 @@ class AutoEngine @Inject constructor(
                                 lower.contains("行") || lower.contains("对")
                             ) {
                                 if (cont.isActive) cont.resume(true)
-                                this.cancel()
+                                confirmationJob?.cancel()
                             } else if (lower.contains("取消") || lower.contains("不") ||
                                 lower.contains("别") || lower.contains("否")
                             ) {
                                 if (cont.isActive) cont.resume(false)
-                                this.cancel()
+                                confirmationJob?.cancel()
                             }
                         }
                     }
@@ -479,18 +479,7 @@ class AutoEngine @Inject constructor(
 // 内部辅助：延迟解析点击目标
 // ========================
 
-/** 标记 UiAction.Click 持有未解析的目标文本，供 executeAction 阶段解析坐标 */
-private interface ClickTargetHolder {
-    val targetText: String?
-}
-
 /** 扩展：为 Click(-1,-1) 注入目标文本 */
 private fun UiAction.Click.copyWithTarget(target: String): UiAction.Click {
-    return TargetClick(x, y, target)
+    return copy(targetText = target)
 }
-
-private class TargetClick(
-    x: Int = -1,
-    y: Int = -1,
-    override val targetText: String?
-) : UiAction.Click(x, y), ClickTargetHolder

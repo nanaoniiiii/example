@@ -2,12 +2,14 @@ package com.aiguide.assistant.di
 
 import android.content.Context
 import com.aiguide.assistant.engine.AssistModeManager
+import com.aiguide.assistant.engine.AutoEngine
 import com.aiguide.assistant.engine.DeviceProfile
 import com.aiguide.assistant.engine.FlashlightManager
 import com.aiguide.assistant.engine.HazardDetector
 import com.aiguide.assistant.engine.NavSafetyEngine
 import com.aiguide.assistant.engine.NavigationListener
 import com.aiguide.assistant.engine.PerformanceOptimizer
+import com.aiguide.assistant.engine.SafetyGuard
 import com.aiguide.assistant.engine.TtsManager
 import com.aiguide.assistant.engine.VisionEngine
 import com.aiguide.assistant.engine.VoiceEngine

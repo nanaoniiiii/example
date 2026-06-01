@@ -122,10 +122,9 @@ class VisionEngine @Inject constructor(
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setTargetResolution(Size(TARGET_WIDTH, TARGET_HEIGHT))
 
-                // LOW 档降低帧率到 10fps
-                if (currentProfile == DeviceProfile.LOW) {
-                    builder.setTargetFrameRate(android.util.Range(LOW_FPS, LOW_FPS))
-                }
+                // LOW 档降低帧率到 10fps（通过分析间隔控制）
+                // Note: setTargetFrameRate requires CameraX 1.3+; frame rate control
+                // is handled via analyzer throttling in LOW profile mode instead.
 
                 imageAnalysis = builder.build()
                     .also { analysis ->
