@@ -1,28 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="48dp">
+    android:padding="32dp">
+
+    <ImageView
+        android:id="@+id/ivOnboarding"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:contentDescription="引导图"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:src="@mipmap/ic_launcher" />
 
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:layout_marginTop="24dp"
+        android:textAppearance="?attr/textAppearanceHeadlineSmall"
         android:textColor="@color/white"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:gravity="center"
+        tools:text="AIGuide 智能辅助" />
 
     <TextView
         android:id="@+id/tvDesc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="12dp"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="@color/indicator_dot_default"
         android:gravity="center"
-        android:lineSpacingExtra="4dp"
-        android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:lineSpacingMultiplier="1.3"
+        tools:text="智能视觉识别、语音交互、隐私保护、导航辅助" />
+
+    <!-- 以下为特殊页面内容容器，由代码动态填充/显示 -->
+    <FrameLayout
+        android:id="@+id/flSpecialContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>

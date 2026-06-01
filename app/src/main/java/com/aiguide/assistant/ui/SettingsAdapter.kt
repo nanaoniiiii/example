@@ -1,176 +1,230 @@
 package com.aiguide.assistant.ui
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
+import android.widget.CompoundButton
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.SeekBar
+import android.widget.Switch
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.aiguide.assistant.BuildConfig
 import com.aiguide.assistant.R
-import com.aiguide.assistant.databinding.ItemSettingSliderBinding
-import com.aiguide.assistant.databinding.ItemSettingSwitchBinding
-import kotlin.math.roundToInt
+import com.aiguide.assistant.service.AssistMode
+import com.aiguide.assistant.service.ServiceBus
 
-/**
- * 设置项数据类。
- */
-sealed class SettingItem(open val key: String, val viewType: Int) {
+class SettingsAdapter(private val serviceBus: ServiceBus) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
-        const val TYPE_SWITCH = 0
-        const val TYPE_SLIDER = 1
-        const val TYPE_SLIDER_INT = 2
-        const val TYPE_SLIDER_FLOAT = 3
+        const val TYPE_CATEGORY = 0
+        const val TYPE_SWITCH = 1
+        const val TYPE_SEEKBAR = 2
+        const val TYPE_RADIO = 3
+        const val TYPE_CLICK = 4
     }
 
-    data class Switch(
-        override val key: String,
-        val title: String,
-        val summary: String,
-        val valueFromFlow: () -> Boolean,
-        val onValueChanged: (Boolean) -> Unit
-    ) : SettingItem(key, TYPE_SWITCH)
+    private var onAboutClick: (() -> Unit)? = null
+    private var onGitHubClick: (() -> Unit)? = null
+    private var onLicenseClick: (() -> Unit)? = null
 
-    data class Slider(
-        override val key: String,
-        val title: String,
-        val summary: String,
-        val valueFromFlow: () -> Int,
-        val valueRange: IntRange,
-        val onValueChanged: (Int) -> Unit
-    ) : SettingItem(key, TYPE_SLIDER)
+    fun setOnAboutClick(l: () -> Unit) { onAboutClick = l }
+    fun setOnGitHubClick(l: () -> Unit) { onGitHubClick = l }
+    fun setOnLicenseClick(l: () -> Unit) { onLicenseClick = l }
 
-    data class SliderInt(
-        override val key: String,
-        val title: String,
-        val summary: String,
-        val valueFromFlow: () -> Int,
-        val valueRange: IntRange,
-        val displayFormat: (Int) -> String = { it.toString() },
-        val onValueChanged: (Int) -> Unit
-    ) : SettingItem(key, TYPE_SLIDER_INT)
+    private val items: List<SettingItem> = listOf(
+        // AI配置
+        SettingItem.Category("AI配置"),
+        SettingItem.Radio("视觉AI模型", listOf("本地TFLite", "云端混元"), 0) { idx ->
+            serviceBus.setVisionModel(if (idx == 0) "tflite" else "hunyuan")
+        },
+        SettingItem.Radio("语音识别引擎", listOf("Vosk离线", "云端API"), 0) { idx ->
+            serviceBus.setAsrEngine(if (idx == 0) "vosk" else "cloud")
+        },
+        SettingItem.Radio("TTS引擎", listOf("系统", "自定义"), 0) { idx ->
+            serviceBus.setTtsEngine(if (idx == 0) "system" else "custom")
+        },
+        SettingItem.Seekbar("唤醒词灵敏度", 0, 100, serviceBus.wakeWordSensitivity.value) { v ->
+            serviceBus.setWakeWordSensitivity(v)
+        },
+        SettingItem.Radio("协助模式超时", listOf("1分钟", "3分钟", "5分钟"), 1) { idx ->
+            val timeoutMinutes = when (idx) { 0 -> 1; 1 -> 3; 2 -> 5; else -> 3 }
+            serviceBus.setAssistTimeout(timeoutMinutes * 60)
+        },
 
-    data class SliderFloat(
-        override val key: String,
-        val title: String,
-        val summary: String,
-        val valueFromFlow: () -> Float,
-        val floatRange: ClosedFloatingPointRange<Float>,
-        val floatSteps: Int = 30,
-        val displayFormat: (Float) -> String = { "%.1f".format(it) },
-        val onValueChanged: (Float) -> Unit
-    ) : SettingItem(key, TYPE_SLIDER_FLOAT)
-}
+        // 显示与遮罩
+        SettingItem.Category("显示与遮罩"),
+        SettingItem.Switch("隐私蒙版", serviceBus.privacyOverlayAlpha.value > 0) { enabled ->
+            serviceBus.setPrivacyOverlayAlpha(if (enabled) 100 else 0)
+        },
+        SettingItem.Seekbar("蒙版透明度", 0, 100, serviceBus.privacyOverlayAlpha.value) { v ->
+            serviceBus.setPrivacyOverlayAlpha(v)
+        },
+        SettingItem.Switch("悬浮窗状态指示器", true) { _ -> },
+        SettingItem.Radio("主题模式", listOf("跟随系统", "浅色", "深色"), 0) { _ -> },
 
-/**
- * 设置列表适配器。
- */
-class SettingsAdapter :
-    ListAdapter<SettingItem, RecyclerView.ViewHolder>(SettingItemDiffCallback()) {
+        // 导航安全
+        SettingItem.Category("导航安全"),
+        SettingItem.Seekbar("危险播报音量", 0, 100, 75) { v ->
+            serviceBus.setHazardVolume(v)
+        },
+        SettingItem.Radio("危险等级过滤", listOf("仅严重", "全部"), 0) { idx ->
+            serviceBus.setHazardFilterMode(if (idx == 0) "critical" else "all")
+        },
+        SettingItem.Switch("天黑自动闪光灯", serviceBus.flashLightEnabled.value) { enabled ->
+            serviceBus.flashLightEnabled.value = enabled
+        },
 
-    override fun getItemViewType(position: Int): Int = getItem(position).viewType
+        // 关于
+        SettingItem.Category("关于"),
+        SettingItem.Click("应用版本") { onAboutClick?.invoke() },
+        SettingItem.Click("应用说明") { onAboutClick?.invoke() },
+        SettingItem.Click("开源许可") { onLicenseClick?.invoke() },
+        SettingItem.Click("GitHub") { onGitHubClick?.invoke() }
+    )
+
+    override fun getItemViewType(position: Int): Int = items[position].type
+
+    override fun getItemCount(): Int = items.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
-            SettingItem.TYPE_SWITCH -> {
-                val binding = ItemSettingSwitchBinding.inflate(inflater, parent, false)
-                SwitchViewHolder(binding)
+            TYPE_CATEGORY -> {
+                val v = inflater.inflate(R.layout.item_setting_category, parent, false)
+                CategoryVH(v)
             }
-            else -> {
-                val binding = ItemSettingSliderBinding.inflate(inflater, parent, false)
-                SliderViewHolder(binding)
+            TYPE_SWITCH -> {
+                val v = inflater.inflate(R.layout.item_setting_universal, parent, false)
+                SwitchVH(v)
             }
+            TYPE_SEEKBAR -> {
+                val v = inflater.inflate(R.layout.item_setting_seekbar, parent, false)
+                SeekbarVH(v)
+            }
+            TYPE_RADIO -> {
+                val v = inflater.inflate(R.layout.item_setting_radio, parent, false)
+                RadioVH(v)
+            }
+            TYPE_CLICK -> {
+                val v = inflater.inflate(R.layout.item_setting_universal, parent, false)
+                ClickVH(v)
+            }
+            else -> throw IllegalArgumentException("Unknown type: $viewType")
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (val item = getItem(position)) {
-            is SettingItem.Switch -> (holder as SwitchViewHolder).bind(item)
-            is SettingItem.Slider -> (holder as SliderViewHolder).bindSlider(item)
-            is SettingItem.SliderInt -> (holder as SliderViewHolder).bindSliderInt(item)
-            is SettingItem.SliderFloat -> (holder as SliderViewHolder).bindSliderFloat(item)
+        val item = items[position]
+        when (holder) {
+            is CategoryVH -> holder.bind(item as SettingItem.Category)
+            is SwitchVH -> holder.bind(item as SettingItem.Switch)
+            is SeekbarVH -> holder.bind(item as SettingItem.Seekbar)
+            is RadioVH -> holder.bind(item as SettingItem.Radio)
+            is ClickVH -> holder.bind(item as SettingItem.Click)
         }
     }
 
-    class SwitchViewHolder(private val binding: ItemSettingSwitchBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    // ============ ViewHolder ============
+
+    class CategoryVH(view: View) : RecyclerView.ViewHolder(view) {
+        private val tv: TextView = view.findViewById(R.id.tvCategory)
+        fun bind(item: SettingItem.Category) { tv.text = item.title }
+    }
+
+    class SwitchVH(view: View) : RecyclerView.ViewHolder(view) {
+        private val tvLabel: TextView = view.findViewById(R.id.tvSettingLabel)
+        private val switch: Switch = view.findViewById(R.id.swSetting)
+        private var item: SettingItem.Switch? = null
+
+        init {
+            switch.setOnCheckedChangeListener { _, isChecked ->
+                item?.onChange?.invoke(isChecked)
+            }
+        }
 
         fun bind(item: SettingItem.Switch) {
-            binding.tvTitle.text = item.title
-            binding.tvSummary.text = item.summary
-            binding.switchItem.isChecked = item.valueFromFlow()
-            binding.switchItem.setOnCheckedChangeListener { _, isChecked ->
-                item.onValueChanged(isChecked)
+            this.item = item
+            tvLabel.text = item.title
+            switch.isChecked = item.initialValue
+        }
+    }
+
+    class SeekbarVH(view: View) : RecyclerView.ViewHolder(view) {
+        private val tvLabel: TextView = view.findViewById(R.id.tvSettingLabel)
+        private val seekBar: SeekBar = view.findViewById(R.id.seekSetting)
+        private val tvValue: TextView = view.findViewById(R.id.tvSettingValue)
+        private var item: SettingItem.Seekbar? = null
+
+        init {
+            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                    tvValue.text = "${progress}%"
+                    if (fromUser) item?.onChange?.invoke(progress)
+                }
+                override fun onStartTrackingTouch(sb: SeekBar?) {}
+                override fun onStopTrackingTouch(sb: SeekBar?) {}
+            })
+        }
+
+        fun bind(item: SettingItem.Seekbar) {
+            this.item = item
+            tvLabel.text = item.title
+            seekBar.max = item.max
+            seekBar.progress = item.initialValue
+            tvValue.text = "${item.initialValue}%"
+        }
+    }
+
+    class RadioVH(view: View) : RecyclerView.ViewHolder(view) {
+        private val tvLabel: TextView = view.findViewById(R.id.tvSettingLabel)
+        private val radioGroup: RadioGroup = view.findViewById(R.id.rgSetting)
+        private var item: SettingItem.Radio? = null
+
+        init {
+            radioGroup.setOnCheckedChangeListener { _, checkedId ->
+                val radio = view.findViewById<RadioButton>(checkedId)
+                val idx = radioGroup.indexOfChild(radio)
+                item?.onChange?.invoke(idx)
+            }
+        }
+
+        fun bind(item: SettingItem.Radio) {
+            this.item = item
+            tvLabel.text = item.title
+            radioGroup.removeAllViews()
+            for ((i, opt) in item.options.withIndex()) {
+                val rb = RadioButton(radioGroup.context).apply {
+                    text = opt
+                    id = View.generateViewId()
+                    layoutParams = RadioGroup.LayoutParams(
+                        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+                    )
+                }
+                radioGroup.addView(rb)
+                if (i == item.initialIndex) radioGroup.check(rb.id)
             }
         }
     }
 
-    class SliderViewHolder(private val binding: ItemSettingSliderBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    class ClickVH(view: View) : RecyclerView.ViewHolder(view) {
+        private val tvLabel: TextView = view.findViewById(R.id.tvSettingLabel)
 
-        fun bindSlider(item: SettingItem.Slider) {
-            binding.tvTitle.text = item.title
-            binding.tvSummary.text = item.summary
-            binding.tvValue.text = item.valueFromFlow().toString()
-            val range = item.valueRange
-            binding.seekBar.max = range.last - range.first
-            binding.seekBar.progress = item.valueFromFlow() - range.first
-            binding.seekBar.setOnSeekBarChangeListener(SliderListener(binding) { progress ->
-                val value = progress + range.first
-                binding.tvValue.text = value.toString()
-                item.onValueChanged(value)
-            })
-        }
-
-        fun bindSliderInt(item: SettingItem.SliderInt) {
-            binding.tvTitle.text = item.title
-            binding.tvSummary.text = item.summary
-            binding.tvValue.text = item.displayFormat(item.valueFromFlow())
-            val range = item.valueRange
-            binding.seekBar.max = range.last - range.first
-            binding.seekBar.progress = item.valueFromFlow() - range.first
-            binding.seekBar.setOnSeekBarChangeListener(SliderListener(binding) { progress ->
-                val value = progress + range.first
-                binding.tvValue.text = item.displayFormat(value)
-                item.onValueChanged(value)
-            })
-        }
-
-        fun bindSliderFloat(item: SettingItem.SliderFloat) {
-            binding.tvTitle.text = item.title
-            binding.tvSummary.text = item.summary
-            binding.tvValue.text = item.displayFormat(item.valueFromFlow())
-            val range = item.floatRange
-            binding.seekBar.max = item.floatSteps
-            val ratio = ((item.valueFromFlow() - range.start) / (range.endInclusive - range.start))
-                .coerceIn(0f, 1f)
-            binding.seekBar.progress = (ratio * item.floatSteps).roundToInt()
-            binding.seekBar.setOnSeekBarChangeListener(SliderListener(binding) { progress ->
-                val value = range.start + (progress.toFloat() / item.floatSteps) *
-                        (range.endInclusive - range.start)
-                binding.tvValue.text = item.displayFormat(value)
-                item.onValueChanged(value)
-            })
-        }
-
-        private class SliderListener(
-            private val binding: ItemSettingSliderBinding,
-            private val onProgress: (Int) -> Unit
-        ) : android.widget.SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) onProgress(progress)
-            }
-
-            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) = Unit
-            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) = Unit
+        fun bind(item: SettingItem.Click) {
+            tvLabel.text = item.title
+            itemView.setOnClickListener { item.onClick() }
         }
     }
-}
 
-class SettingItemDiffCallback : DiffUtil.ItemCallback<SettingItem>() {
-    override fun areItemsTheSame(oldItem: SettingItem, newItem: SettingItem): Boolean =
-        oldItem.key == newItem.key
+    // ============ Setting Item sealed class ============
 
-    override fun areContentsTheSame(oldItem: SettingItem, newItem: SettingItem): Boolean =
-        oldItem == newItem
+    sealed class SettingItem(val type: Int) {
+        data class Category(val title: String) : SettingItem(TYPE_CATEGORY)
+        data class Switch(val title: String, val initialValue: Boolean, val onChange: (Boolean) -> Unit) : SettingItem(TYPE_SWITCH)
+        data class Seekbar(val title: String, val min: Int, val max: Int, val initialValue: Int, val onChange: (Int) -> Unit) : SettingItem(TYPE_SEEKBAR)
+        data class Radio(val title: String, val options: List<String>, val initialIndex: Int, val onChange: (Int) -> Unit) : SettingItem(TYPE_RADIO)
+        data class Click(val title: String, val onClick: () -> Unit) : SettingItem(TYPE_CLICK)
+    }
 }

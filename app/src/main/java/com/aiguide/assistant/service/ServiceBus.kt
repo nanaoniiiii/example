@@ -121,6 +121,24 @@ class ServiceBus @Inject constructor() {
     /** 状态指示器悬浮窗可见性 */
     var statusIndicatorVisible = MutableStateFlow(false)
 
+    /** 唤醒词灵敏度 0-100 */
+    var wakeWordSensitivity = MutableStateFlow(50)
+
+    /** 视觉AI模型选择 */
+    var visionModel = MutableStateFlow("tflite")
+
+    /** 语音识别引擎选择 */
+    var asrEngine = MutableStateFlow("vosk")
+
+    /** TTS引擎选择 */
+    var ttsEngine = MutableStateFlow("system")
+
+    /** 危险播报音量 0-100 */
+    var hazardVolume = MutableStateFlow(75)
+
+    /** 危险等级过滤模式 */
+    var hazardFilterMode = MutableStateFlow("critical")
+
     // ========================
     // 事件发射方法
     // ========================
@@ -167,6 +185,56 @@ class ServiceBus @Inject constructor() {
 
     fun setBatteryOptimizationExempt(exempt: Boolean) {
         _batteryOptimizationExempt.value = exempt
+    }
+
+    // ========================
+    // 引擎控制方法 (供 UI 调用)
+    // ========================
+
+    fun startWakeWordDetection() {
+        // 由 VoiceEngine 监听的 MutableSharedFlow 触发
+        _voiceCommand.tryEmit("__WAKE_WORD_START__")
+    }
+
+    fun endListening() {
+        _voiceCommand.tryEmit("__END_LISTENING__")
+    }
+
+    fun requestCameraCapture() {
+        // 触发视觉引擎拍照
+        _visionResult.tryEmit(VisionResult(
+            type = VisionType.SCENE,
+            label = "__CAPTURE_REQUEST__",
+            confidence = 0f
+        ))
+    }
+
+    fun setVisionModel(model: String) {
+        visionModel.value = model
+    }
+
+    fun setAsrEngine(engine: String) {
+        asrEngine.value = engine
+    }
+
+    fun setTtsEngine(engine: String) {
+        ttsEngine.value = engine
+    }
+
+    fun setWakeWordSensitivity(value: Int) {
+        wakeWordSensitivity.value = value.coerceIn(0, 100)
+    }
+
+    fun setAssistTimeout(seconds: Int) {
+        assistModeTimeout.value = (seconds / 60).coerceIn(1, 5)
+    }
+
+    fun setHazardVolume(value: Int) {
+        hazardVolume.value = value.coerceIn(0, 100)
+    }
+
+    fun setHazardFilterMode(mode: String) {
+        hazardFilterMode.value = mode
     }
 }
 

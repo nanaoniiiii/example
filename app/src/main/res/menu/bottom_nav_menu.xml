@@ -2,14 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navHome"
-        android:icon="@android:drawable/ic_menu_info_details"
+        android:icon="@drawable/ic_home"
         android:title="@string/nav_home" />
     <item
+        android:id="@+id/navLab"
+        android:icon="@drawable/ic_lab"
+        android:title="@string/nav_lab" />
+    <item
         android:id="@+id/navSettings"
-        android:icon="@android:drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_settings"
         android:title="@string/nav_settings" />
     <item
-        android:id="@+id/navTest"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:title="@string/nav_test" />
+        android:id="@+id/navAbout"
+        android:icon="@drawable/ic_info"
+        android:title="@string/nav_about" />
 </menu>

@@ -1,25 +1,21 @@
 package com.aiguide.assistant.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.aiguide.assistant.BuildConfig
 import com.aiguide.assistant.R
+import com.aiguide.assistant.service.AssistMode
 import com.aiguide.assistant.service.ServiceBus
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-/**
- * 设置页面：使用 RecyclerView 展示各项设置，绑定 ServiceBus StateFlow。
- */
 @AndroidEntryPoint
 class SettingsActivity : AppCompatActivity() {
 
     @Inject
     lateinit var serviceBus: ServiceBus
-
-    private val adapter = SettingsAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,76 +23,39 @@ class SettingsActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
+        findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar).setNavigationOnClickListener {
+            finish()
+        }
 
-        adapter.submitList(buildSettingsList())
+        val recyclerView = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvSettings)
+        recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        recyclerView.adapter = SettingsAdapter(serviceBus).apply {
+            setOnAboutClick { showAbout() }
+            setOnGitHubClick { openGitHub() }
+            setOnLicenseClick { showLicenses() }
+        }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
+    private fun showAbout() {
+        val text = getString(R.string.about_description_text, BuildConfig.VERSION_NAME)
+        android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.settings_category_about)
+            .setMessage(text)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
-    private fun buildSettingsList(): List<SettingItem> = listOf(
-        SettingItem.Slider(
-            key = "privacy_overlay_alpha",
-            title = getString(R.string.setting_privacy_overlay_alpha),
-            summary = getString(R.string.setting_privacy_overlay_alpha),
-            valueFromFlow = { serviceBus.privacyOverlayAlpha.value },
-            valueRange = 0..100,
-            onValueChanged = { serviceBus.setPrivacyOverlayAlpha(it) }
-        ),
-        SettingItem.Switch(
-            key = "voice_wake",
-            title = getString(R.string.setting_voice_wake),
-            summary = "语音唤醒后触发协助模式",
-            valueFromFlow = { serviceBus.voiceWakeEnabled.value },
-            onValueChanged = { serviceBus.voiceWakeEnabled.value = it }
-        ),
-        SettingItem.SliderFloat(
-            key = "tts_rate",
-            title = getString(R.string.setting_tts_rate),
-            summary = "控制 TTS 朗读语速",
-            valueFromFlow = { serviceBus.ttsRate.value },
-            floatRange = 0.5f..2.0f,
-            floatSteps = 30,
-            displayFormat = { "%.1fx".format(it) },
-            onValueChanged = { serviceBus.ttsRate.value = it }
-        ),
-        SettingItem.SliderFloat(
-            key = "tts_pitch",
-            title = getString(R.string.setting_tts_pitch),
-            summary = "控制 TTS 朗读音调",
-            valueFromFlow = { serviceBus.ttsPitch.value },
-            floatRange = 0.5f..2.0f,
-            floatSteps = 30,
-            displayFormat = { "%.1f".format(it) },
-            onValueChanged = { serviceBus.ttsPitch.value = it }
-        ),
-        SettingItem.SliderInt(
-            key = "assist_timeout",
-            title = getString(R.string.setting_assist_timeout),
-            summary = "协助模式超时时间",
-            valueFromFlow = { serviceBus.assistModeTimeout.value },
-            valueRange = 1..5,
-            displayFormat = { getString(R.string.setting_assist_timeout_format, it) },
-            onValueChanged = { serviceBus.assistModeTimeout.value = it }
-        ),
-        SettingItem.Switch(
-            key = "flashlight",
-            title = getString(R.string.setting_flashlight),
-            summary = "天黑时自动闪烁闪光灯提醒",
-            valueFromFlow = { serviceBus.flashLightEnabled.value },
-            onValueChanged = { serviceBus.flashLightEnabled.value = it }
-        ),
-        SettingItem.Switch(
-            key = "low_power",
-            title = getString(R.string.setting_low_power),
-            summary = "降低帧率和处理频率以节省电量",
-            valueFromFlow = { serviceBus.lowPowerMode.value },
-            onValueChanged = { serviceBus.lowPowerMode.value = it }
-        )
-    )
+    private fun openGitHub() {
+        startActivity(Intent(Intent.ACTION_VIEW,
+            Uri.parse(getString(R.string.about_github_url))))
+    }
+
+    private fun showLicenses() {
+        val text = getString(R.string.about_license_text)
+        android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.about_license_title)
+            .setMessage(text)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
 }
