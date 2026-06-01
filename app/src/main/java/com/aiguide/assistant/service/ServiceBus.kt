@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import androidx.camera.core.ImageProxy
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,6 +44,15 @@ class ServiceBus @Inject constructor() {
     private val _navDeviationWarning = MutableSharedFlow<NavWarning>(extraBufferCapacity = 4)
     val navDeviationWarning = _navDeviationWarning.asSharedFlow()
 
+    /** Camera2 帧流 (YUV ImageProxy) */
+    val cameraFrame = MutableSharedFlow<ImageProxy>(extraBufferCapacity = 16)
+
+    /** 导航播报事件 (TTS 文本) */
+    val navigationEvent = MutableSharedFlow<String>(extraBufferCapacity = 8)
+
+    /** 危险分析结果 */
+    val hazardAlert = MutableSharedFlow<HazardResult>(extraBufferCapacity = 8)
+
     // ========================
     // 状态通道 (StateFlow)
     // ========================
@@ -62,6 +72,12 @@ class ServiceBus @Inject constructor() {
     /** 电池优化豁免状态 */
     private val _batteryOptimizationExempt = MutableStateFlow(false)
     val batteryOptimizationExempt: StateFlow<Boolean> = _batteryOptimizationExempt
+
+    /** 摄像头开关状态 */
+    var cameraEnabled = MutableStateFlow(false)
+
+    /** 环境光 lux（预留） */
+    var environmentLux = MutableStateFlow(0f)
 
     // ========================
     // 事件发射方法
@@ -137,3 +153,13 @@ data class NavWarning(
 )
 
 enum class NavWarningType { OFF_ROUTE, OBSTACLE, WRONG_DIRECTION }
+
+/** 三级危险等级 */
+enum class HazardLevel { CRITICAL, WARNING, INFO }
+
+/** 危险分析结果 */
+data class HazardResult(
+    val level: HazardLevel,
+    val message: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
