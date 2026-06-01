@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import com.aiguide.assistant.service.DeviceProfile
 import com.aiguide.assistant.service.ServiceBus
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -44,12 +45,18 @@ class VisionEngine @Inject constructor(
     companion object {
         private const val TARGET_WIDTH = 640
         private const val TARGET_HEIGHT = 480
+
+        /** LOW 档目标帧率（fps） */
+        private const val LOW_FPS = 10
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var cameraProvider: ProcessCameraProvider? = null
     private var imageAnalysis: ImageAnalysis? = null
+
+    /** 当前设备档位（动态更新） */
+    private var currentProfile: DeviceProfile = DeviceProfile.HIGH
 
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning
@@ -75,6 +82,19 @@ class VisionEngine @Inject constructor(
             },
             null
         )
+
+        // Phase 4: 监听 deviceProfile 变化，动态调整帧率
+        scope.launch {
+            serviceBus.deviceProfile.collect { profile ->
+                val oldProfile = currentProfile
+                currentProfile = profile
+                // 档位切换时重新配置 ImageAnalysis 帧率
+                if (oldProfile != profile && _isRunning.value) {
+                    stopCamera()
+                    startCamera()
+                }
+            }
+        }
     }
 
     /**
@@ -97,11 +117,17 @@ class VisionEngine @Inject constructor(
                 // 解绑所有已有用例，避免重复绑定
                 provider.unbindAll()
 
-                // 构建 ImageAnalysis 用例
-                imageAnalysis = ImageAnalysis.Builder()
+                // Phase 4: 根据档位构建 ImageAnalysis
+                val builder = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setTargetResolution(Size(TARGET_WIDTH, TARGET_HEIGHT))
-                    .build()
+
+                // LOW 档降低帧率到 10fps
+                if (currentProfile == DeviceProfile.LOW) {
+                    builder.setTargetFrameRate(android.util.Range(LOW_FPS, LOW_FPS))
+                }
+
+                imageAnalysis = builder.build()
                     .also { analysis ->
                         analysis.setAnalyzer(cameraExecutor) { imageProxy: ImageProxy ->
                             // 将帧发布到总线，由消费者负责 imageProxy.close()

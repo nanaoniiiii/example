@@ -1,13 +1,10 @@
 package com.aiguide.assistant.engine
 
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
 import com.aiguide.assistant.service.ServiceBus
@@ -27,8 +24,10 @@ import javax.inject.Singleton
  * ## 工作机制
  * 1. 通过 CameraManager + CameraCharacteristics 读取环境光 Sensor (LIGHT)
  * 2. 环境光 < 10 lux → 判定为天黑
- * 3. 天黑状态下周期性闪烁闪光灯（开 300ms → 关）
- * 4. 电源模式自适应：充电时 4 秒间隔，电池模式 8 秒间隔
+ * 3. 天黑状态下周期性闪烁闪光灯
+ * 4. 闪烁间隔由 [ServiceBus.performanceParams.flashInterval] 动态控制
+ *    - flashInterval = 0 → 关闭闪光灯
+ *    - 否则按指定间隔闪烁
  *
  * ## 用法
  * ```kotlin
@@ -47,12 +46,6 @@ class FlashlightManager @Inject constructor(
         /** 天黑判定阈值（lux） */
         private const val DARK_THRESHOLD_LUX = 10f
 
-        /** 电池模式下闪烁间隔（毫秒） */
-        private const val FLASH_INTERVAL_BATTERY_MS = 8000L
-
-        /** 充电模式下闪烁间隔（毫秒） */
-        private const val FLASH_INTERVAL_CHARGING_MS = 4000L
-
         /** 闪光灯点亮时长（毫秒） */
         private const val FLASH_ON_DURATION_MS = 300L
     }
@@ -70,12 +63,15 @@ class FlashlightManager @Inject constructor(
     private var isRunning: Boolean = false
     private var isFlashing: Boolean = false
 
+    /** Phase 4: 动态闪烁间隔（由 performanceParams.flashInterval 控制） */
+    private var currentFlashInterval: Long = 8000L
+
     private var flashRunnable: Runnable? = null
 
     init {
         detectCameraWithFlash()
         observeEnvironmentLight()
-        observePowerState()
+        observePerformanceParams()
     }
 
     // ========================
@@ -163,40 +159,28 @@ class FlashlightManager @Inject constructor(
     }
 
     // ========================
-    // 电源状态监听
+    // 性能参数监听（Phase 4）
     // ========================
 
     /**
-     * 监听充电状态以自适应闪烁间隔。
+     * 监听 performanceParams 动态更新闪光灯间隔。
      */
-    private fun observePowerState() {
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_BATTERY_CHANGED)
+    private fun observePerformanceParams() {
+        scope.launch {
+            serviceBus.performanceParams.collectLatest { params ->
+                currentFlashInterval = params.flashInterval
+
+                // flashInterval = 0 表示关闭闪光灯
+                if (currentFlashInterval <= 0L && isFlashing) {
+                    cancelFlashRunnable()
+                    turnOffTorch()
+                    serviceBus.flashLightEnabled.value = false
+                } else if (currentFlashInterval > 0L && isRunning && !isFlashing &&
+                    serviceBus.isDarkEnvironment.value) {
+                    startFlashing()
+                }
+            }
         }
-
-        context.registerReceiver(null, filter)?.let { intent ->
-            updatePowerState(intent)
-        }
-    }
-
-    private fun updatePowerState(intent: Intent) {
-        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
-
-        // 电源状态变化时，如果正在闪烁，重新调度以使用正确间隔
-        if (isFlashing) {
-            cancelFlashRunnable()
-            startFlashing()
-        }
-    }
-
-    private fun isCurrentlyCharging(): Boolean {
-        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        val intent = context.registerReceiver(null, filter) ?: return false
-        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-        return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
     }
 
     // ========================
@@ -207,7 +191,7 @@ class FlashlightManager @Inject constructor(
      * 开始周期性闪烁。
      */
     private fun startFlashing() {
-        if (rearCameraId == null) return
+        if (rearCameraId == null || currentFlashInterval <= 0L) return
         scheduleFlash()
     }
 
@@ -215,13 +199,9 @@ class FlashlightManager @Inject constructor(
      * 调度一次"亮 + 关 + 延迟"循环。
      */
     private fun scheduleFlash() {
-        if (!isRunning) return
+        if (!isRunning || currentFlashInterval <= 0L) return
 
-        val interval = if (isCurrentlyCharging()) {
-            FLASH_INTERVAL_CHARGING_MS
-        } else {
-            FLASH_INTERVAL_BATTERY_MS
-        }
+        val interval = currentFlashInterval
 
         flashRunnable = object : Runnable {
             override fun run() {

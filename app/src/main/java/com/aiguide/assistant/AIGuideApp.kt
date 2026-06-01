@@ -2,10 +2,12 @@ package com.aiguide.assistant
 
 import android.app.Application
 import com.aiguide.assistant.engine.AutoEngine
+import com.aiguide.assistant.engine.DeviceProfile
 import com.aiguide.assistant.engine.FlashlightManager
 import com.aiguide.assistant.engine.HazardDetector
 import com.aiguide.assistant.engine.NavSafetyEngine
 import com.aiguide.assistant.engine.NavigationListener
+import com.aiguide.assistant.engine.PerformanceOptimizer
 import com.aiguide.assistant.engine.SafetyGuard
 import com.aiguide.assistant.engine.VisionEngine
 import com.aiguide.assistant.service.ServiceBus
@@ -17,6 +19,12 @@ class AIGuideApp : Application() {
 
     @Inject
     lateinit var serviceBus: ServiceBus
+
+    @Inject
+    lateinit var deviceProfile: DeviceProfile
+
+    @Inject
+    lateinit var performanceOptimizer: PerformanceOptimizer
 
     @Inject
     lateinit var visionEngine: VisionEngine
@@ -44,7 +52,10 @@ class AIGuideApp : Application() {
         instance = this
 
         // Hilt 在 super.onCreate() 后完成字段注入。
-        // 所有 Engine 模块依赖 ServiceBus，由构造函数注入自动保证顺序。
+        // Phase 4: DeviceProfile 和 PerformanceOptimizer 在 init 块中自动完成初始化，
+        // 必须在 VisionEngine / HazardDetector / FlashlightManager 之前完成，
+        // 以保证 performanceParams / deviceProfile 已发布到 ServiceBus。
+        // Hilt 注入顺序已保证：deviceProfile → performanceOptimizer → 其他 Engine。
 
         // Phase 2: 初始化 HazardDetector 和 FlashlightManager
         // HazardDetector 在 init 块中自动开始监听 cameraFrame 流

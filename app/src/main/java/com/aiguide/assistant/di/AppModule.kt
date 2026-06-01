@@ -2,10 +2,12 @@ package com.aiguide.assistant.di
 
 import android.content.Context
 import com.aiguide.assistant.engine.AssistModeManager
+import com.aiguide.assistant.engine.DeviceProfile
 import com.aiguide.assistant.engine.FlashlightManager
 import com.aiguide.assistant.engine.HazardDetector
 import com.aiguide.assistant.engine.NavSafetyEngine
 import com.aiguide.assistant.engine.NavigationListener
+import com.aiguide.assistant.engine.PerformanceOptimizer
 import com.aiguide.assistant.engine.TtsManager
 import com.aiguide.assistant.engine.VisionEngine
 import com.aiguide.assistant.engine.VoiceEngine
@@ -108,4 +110,22 @@ object AppModule {
     fun provideSafetyGuard(
         serviceBus: ServiceBus
     ): SafetyGuard = SafetyGuard(serviceBus)
+
+    // ========================
+    // Phase 4: 性能适配
+    // ========================
+
+    @Provides
+    @Singleton
+    fun provideDeviceProfile(
+        @ApplicationContext context: Context
+    ): DeviceProfile = DeviceProfile(context)
+
+    @Provides
+    @Singleton
+    fun providePerformanceOptimizer(
+        @ApplicationContext context: Context,
+        deviceProfile: DeviceProfile,
+        serviceBus: ServiceBus
+    ): PerformanceOptimizer = PerformanceOptimizer(context, deviceProfile, serviceBus)
 }

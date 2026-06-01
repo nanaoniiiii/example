@@ -93,6 +93,12 @@ class ServiceBus @Inject constructor() {
     /** 当前环境是否判定为天黑（lux < 10） */
     var isDarkEnvironment = MutableStateFlow(false)
 
+    /** 设备性能档位（Phase 4：供 PerformanceOptimizer 发布） */
+    var deviceProfile = MutableStateFlow(DeviceProfile.HIGH)
+
+    /** 自适应性能参数（Phase 4：PerformanceOptimizer 动态发布） */
+    var performanceParams = MutableStateFlow(PerformanceParams())
+
     // ========================
     // 事件发射方法
     // ========================
@@ -208,3 +214,25 @@ enum class AutoActionType {
     RECENT,
     NOTIFICATIONS
 }
+
+// ========================
+// Phase 4: 设备性能档位 + 自适应参数
+// ========================
+
+/** 设备性能档位枚举 */
+enum class DeviceProfile { HIGH, MEDIUM, LOW }
+
+/**
+ * 自适应性能参数（由 [PerformanceOptimizer] 动态发布）。
+ *
+ * @param frameSkip      每 N 帧推理一次（1=每帧）
+ * @param skipInterval   帧跳过间隔（与 frameSkip 一致）
+ * @param flashInterval  闪光灯间隔（毫秒），0 = 关闭
+ * @param batteryWarning 是否触发低电量警告（<15%）
+ */
+data class PerformanceParams(
+    val frameSkip: Int = 1,
+    val skipInterval: Int = 1,
+    val flashInterval: Long = 4000L,
+    val batteryWarning: Boolean = false
+)

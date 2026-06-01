@@ -37,7 +37,7 @@ import javax.inject.Singleton
  * - 急坡 (steep_slope)
  *
  * ## 推理策略
- * - 每 3 帧推理一次（降低功耗）
+ * - 推理频率由 [ServiceBus.performanceParams.frameSkip] 动态控制
  * - 推理超时 300ms 跳过当前帧
  * - 检测结果通过 [ServiceBus.hazardAlert] 发布
  */
@@ -56,9 +56,6 @@ class HazardDetector @Inject constructor(
 
         /** 模型输入字节数: 320 * 320 * 3 * 4 (float32) */
         private const val INPUT_BYTE_SIZE = INPUT_SIZE * INPUT_SIZE * 3 * 4
-
-        /** 每 N 帧推理一次 */
-        private const val INFERENCE_INTERVAL = 3
 
         /** 单次推理超时（毫秒） */
         private const val INFERENCE_TIMEOUT_MS = 300L
@@ -90,6 +87,9 @@ class HazardDetector @Inject constructor(
     private var interpreter: Interpreter? = null
     private var frameCounter = 0
     private var isInitialized = false
+
+    /** 当前帧跳过间隔（由 performanceParams 动态更新） */
+    private var currentFrameSkip = 1
 
     private val inputBuffer: ByteBuffer by lazy {
         ByteBuffer.allocateDirect(INPUT_BYTE_SIZE).apply {
@@ -149,16 +149,21 @@ class HazardDetector @Inject constructor(
                 processFrame(frame)
             }
         }
+        // 监听 performanceParams 变化，动态更新帧跳过间隔
+        scope.launch {
+            serviceBus.performanceParams.collectLatest { params ->
+                currentFrameSkip = params.frameSkip.coerceAtLeast(1)
+            }
+        }
     }
 
     /**
-     * 每 INFERENCE_INTERVAL 帧推理一次，其他帧直接关闭并跳过。
+     * 根据 currentFrameSkip 动态控制推理频率。
      */
     private suspend fun processFrame(frame: ImageProxy) {
         try {
             frameCounter++
-            if (frameCounter % INFERENCE_INTERVAL != 0) {
-                // 跳过当前帧（不推理，帧由 NavSafetyEngine 负责 close）
+            if (frameCounter % currentFrameSkip != 0) {
                 return
             }
 
