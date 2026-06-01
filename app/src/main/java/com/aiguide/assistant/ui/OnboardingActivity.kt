@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.aiguide.assistant.R
+import com.aiguide.assistant.MainActivity
 import com.aiguide.assistant.service.AssistMode
 import com.aiguide.assistant.service.ServiceBus
 import dagger.hilt.android.AndroidEntryPoint
@@ -241,7 +242,6 @@ class OnboardingActivity : AppCompatActivity() {
 
             btnCapture.setOnClickListener {
                 serviceBus.requestCameraCapture()
-                viewLifecycleOwnerLiveData() // simplified: just show a placeholder
                 tvResult.text = "识别中...请稍候"
                 // In a real app, collect visionResult flow; here a simple mock
                 viewPager.postDelayed({
@@ -314,8 +314,6 @@ class OnboardingActivity : AppCompatActivity() {
                 )
             }
         }
-
-        private fun viewLifecycleOwnerLiveData() {}
 
         inner class VH(view: View) : RecyclerView.ViewHolder(view) {
             val ivIcon: ImageView = view.findViewById(R.id.ivOnboarding)

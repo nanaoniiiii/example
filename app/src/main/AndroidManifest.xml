@@ -36,7 +36,7 @@
     <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
 
     <application
-        android:name="android.app.Application"
+        android:name=".AIGuideApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
@@ -49,33 +49,26 @@
 
         <activity
             android:name=".TestActivity"
-            android:exported="true"
-            android:label="AIGuide Test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:label="AIGuide Test" />
 
-        <!--
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.AIGuide"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 引导页 Activity（首次启动） -->
+        <activity
+            android:name=".ui.OnboardingActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AIGuide.Onboarding">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        -->
-
-        <!-- 引导页 Activity -->
-        <activity
-            android:name=".ui.OnboardingActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AIGuide.Onboarding" />
 
         <!-- 设置页 Activity -->
         <activity

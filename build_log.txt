@@ -1,5 +1,3 @@
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.5/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
@@ -7,18 +5,18 @@ Daemon will be stopped at the end of the build
 > Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
 > Task :app:generateDebugResources UP-TO-DATE
-> Task :app:mergeDebugResources UP-TO-DATE
-> Task :app:packageDebugResources UP-TO-DATE
-> Task :app:parseDebugLocalResources UP-TO-DATE
-> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugBuildConfig
+> Task :app:dataBindingGenBaseClassesDebug
 > Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
 > Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :app:processDebugMainManifest UP-TO-DATE
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
-> Task :app:processDebugResources UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
@@ -35,6 +33,7 @@ Daemon will be stopped at the end of the build
 > Task :app:validateSigningDebug UP-TO-DATE
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:processDebugResources
 > Task :app:kaptGenerateStubsDebugKotlin
 
 > Task :app:kaptDebugKotlin
@@ -43,34 +42,18 @@ Set 'kapt.include.compile.classpath=false' to disable discovery.
 Run the build with '--info' for more details.
 
 > Task :app:compileDebugKotlin
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/engine/AutoEngine.kt:231:37 'recycle(): Unit' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/engine/AutoEngine.kt:237:14 'recycle(): Unit' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/engine/AutoEngine.kt:242:19 'recycle(): Unit' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/engine/AutoEngine.kt:272:31 Parameter 'targetText' is never used
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/engine/VisionEngine.kt:123:22 'setTargetResolution(Size): ImageAnalysis.Builder' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/engine/VoiceEngine.kt:75:20 Parameter 'modelPath' is never used
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/service/AIGuideAccessibilityService.kt:84:22 'onGesture(Int): Boolean' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/service/AIGuideAccessibilityService.kt:96:14 'recycle(): Unit' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/service/AIGuideAccessibilityService.kt:140:21 'recycle(): Unit' is deprecated. Deprecated in Java
-w: file:///C:/Users/31919/AppData/Roaming/Tencent/Marvis/User/oAN1i2UWcA_5GXXM9NWonIyTt020/workspace/conv_19e8152f815_a6cfee173a18/ai-guide/app/src/main/java/com/aiguide/assistant/service/AIGuideAccessibilityService.kt:142:14 'recycle(): Unit' is deprecated. Deprecated in Java
-
 > Task :app:compileDebugJavaWithJavac
-
 > Task :app:hiltAggregateDepsDebug
-WARNING: [Processor] Library 'C:\Users\31919\.gradle\caches\transforms-3\65c578b3e1f0d38981da76e128b0e3c3\transformed\core-1.12.0-api.jar' contains references to both AndroidX and old support library. This seems like the library is partially migrated. Jetifier will try to rewrite the library anyway.
- Example of androidX reference: 'androidx/core/os/BuildCompat'
- Example of support library reference: 'android/support/v4/app/INotificationSideChannel$Default'
-
-> Task :app:hiltJavaCompileDebug
-> Task :app:processDebugJavaRes
+> Task :app:hiltJavaCompileDebug NO-SOURCE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
 > Task :app:transformDebugClassesWithAsm
-> Task :app:mergeDebugJavaResource
 > Task :app:dexBuilderDebug
-> Task :app:mergeDebugGlobalSynthetics
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
 > Task :app:mergeProjectDexDebug
 > Task :app:packageDebug
-> Task :app:createDebugApkListingFileRedirect
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
 > Task :app:assembleDebug
 
-BUILD SUCCESSFUL in 1m 11s
-43 actionable tasks: 15 executed, 28 up-to-date
+BUILD SUCCESSFUL in 28s
+43 actionable tasks: 17 executed, 26 up-to-date
