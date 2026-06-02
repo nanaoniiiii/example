@@ -20,6 +20,8 @@
 
         <Button
             android:id="@+id/btnSkip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             style="@style/Widget.Material3.Button.TextButton"
             android:text="@string/onboarding_skip"
             android:textColor="@color/white" />
